@@ -1,0 +1,147 @@
+(* File: lexer.mml *)
+
+{#use "token.ml";;}
+
+let digit = ['0'-'9']
+let digits = digit+
+let integer = '0' | (('-'|'+')?['1'-'9'] ['0'-'9']*)
+let float = (integer ('e'|'E') integer) | (integer '.' digit*)
+let string = '\"'_*'\"'
+let plus = '+'
+let minus = '-'
+let mul = '*'
+let div = '/'
+let exp = "**"
+let is_eq = "=="
+let is_neq = "!="
+let is_less = "<"
+let is_less_eq = "<="
+let is_great = ">"
+let is_great_eq = ">="
+let eq = "="
+let if = "if"
+let else = "else"
+let lparen = '('
+let rparen = ')'
+let lcomment = "(*"
+let rcomment = "*)"
+let alpha = ['a'-'z']
+let name = alpha+
+let id_tok = ('_'+ alpha* digit*) | name (alpha* '_'* digit*)*
+let bool = ("True")|("False")
+
+rule lexer = parse
+       lcomment
+     {
+        comment 1 lexbuf
+     }
+     | bool as s
+     {
+        if s = "True" then
+           Literal_tok (Bool_tok 1)::(lexer lexbuf)
+        else
+           Literal_tok (Bool_tok 0)::(lexer lexbuf)
+     }
+     | is_less
+     {
+        Is_Less_tok::(lexer lexbuf)
+     }
+     | is_less_eq
+     {
+        Is_Less_Equ_tok::(lexer lexbuf)
+     }
+     | is_great
+     {
+        Is_Great_tok::(lexer lexbuf)
+     }
+     | is_great_eq
+     {
+        Is_Great_tok::(lexer lexbuf)
+     }
+     | lparen
+     {
+        (Lparen_tok)::(lexer lexbuf)
+     }
+     | rparen
+     {
+        (Rparen_tok)::(lexer lexbuf)
+     }
+     | float as s
+     {
+        let f = float_of_string s in
+        (Literal_tok (Float_tok f))::(lexer lexbuf)
+     }
+     | string as s
+     {
+        (String_tok s)::(lexer lexbuf)
+     }
+     | integer as s
+     {
+        let i = int_of_string s in
+        Literal_tok (Int_tok i)::(lexer lexbuf)
+     }
+     | plus
+     {
+        (Plus_tok)::(lexer lexbuf)
+     }
+     | minus
+     {
+        (Minus_tok)::(lexer lexbuf)
+     }
+     | mul
+     {
+        (Mul_tok)::(lexer lexbuf)
+     }
+     | div
+     {
+        (Div_tok)::(lexer lexbuf)
+     }
+     | exp
+     {
+        (Exp_tok)::(lexer lexbuf)
+     }
+     | if
+     {
+        (If_tok)::(lexer lexbuf)
+     }
+     | else
+     {
+        (Else_tok)::(lexer lexbuf)
+     }
+     | is_eq
+     {
+        (Is_Equ_tok)::(lexer lexbuf)
+     }
+     | is_neq
+     {
+        (Is_Neq_tok)::(lexer lexbuf)
+     }
+     | eq
+     {
+        (Equ_tok)::(lexer lexbuf)
+     }
+     | eof
+     {
+         []
+     }
+     | id_tok as s
+     {
+        (Id_tok s)::(lexer lexbuf)
+     }
+     | _ 
+     {
+        lexer lexbuf
+     }
+     and
+     comment n = parse
+       lcomment { comment (n+1) lexbuf }
+     | rcomment {
+                        if n = 1 then
+                           lexer lexbuf
+                        else
+                           comment (n-1) lexbuf
+                     }
+     | _             { comment n lexbuf }
+{
+let tokenize s = lexer (Lexing.from_string s);;
+}

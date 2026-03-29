@@ -1,0 +1,63 @@
+#use "parser.ml";;
+
+let symmtable = Hashtbl.create 10;;
+
+let run_tree parse_tree symmtable =
+  let rec eval_assign assign = match assign with
+      Not_Assign b -> let ret = eval_bool b in
+      let _ = print_literal ret in
+      print_string "\n"
+    | Assign (v, b) -> Hashtbl.add symmtable v (eval_bool b)
+  and
+    eval_bool bool = match bool with
+      Expr e -> eval_expr e
+    | Equ_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Equ_tok, (eval_bool b))
+    | Nequ_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Neq_tok, (eval_bool b))
+    | Less_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Less_tok, (eval_bool b))
+    | Great_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Great_tok, (eval_bool b))
+    | Less_Eq_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Less_Equ_tok, (eval_bool b))
+    | Great_Eq_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Great_Equ_tok, (eval_bool b))
+  and eval_expr expr = match expr with
+      Plus_Expr (t, e) -> evaluate_literal ((eval_term t), Plus_tok, (eval_expr e))
+    | Minus_Expr (t, e) -> evaluate_literal ((eval_term t), Minus_tok, (eval_expr e))
+    | Term_Expr t -> eval_term t
+  and eval_term term = match term with
+      Mul_Term (f, t) -> evaluate_literal ((eval_factor f), Mul_tok, (eval_term t))
+    | Div_Term (f, t) -> evaluate_literal ((eval_factor f), Mul_tok, (eval_term t))
+    | Factor_Term f -> eval_factor f
+  and eval_factor factor = match factor with
+      Literal_Factor i -> i
+    | Variable_Factor name -> Hashtbl.find symmtable name
+    | Paren_Expr_Factor b -> eval_bool b
+  in
+  let _ = eval_assign parse_tree in
+  ()
+;;
+
+print_string ">> ";;
+let s = read_line ();;
+
+let rec loop s =
+  let token_list = tokenize s in
+  (* let _ = print_tokens token_list in *)
+  let e, t = assign token_list in
+  let _ = 
+    (match t with
+       [] -> run_tree e symmtable
+     | xs -> print_string "Error")
+  in
+  
+  let _ = print_string ">> " in
+  let s = read_line () in
+  loop s
+;;
+
+loop s;;
+
+(* let exp, _ = e;; *)
+(* print_int (eval_expr exp);; *)
+(* print_string "\n";; *)
+
+(* let ans = infix_evaluate token_list;; *)
+(* print_token(ans);; *)
+(* print_string ("\n");; *)
