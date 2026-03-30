@@ -1,0 +1,26 @@
+precedence rules
+    statements (conditional_branch, conditional_loop, assignment, expression)
+        - Conditional_statement (conditional_branch)
+        - Conditional_loop (conditional_loop)
+        - Assignment (string * expression)
+        - Expression (expression)
+    conditional_branch
+        - if_statement (expression * statement)
+    condition_loop
+        -
+    expression
+        // Bool_expression
+        - Term_Expr (term)
+        - Equalizer_comparison (expr * expr)
+        - Nequalizer_comparison (expr * expr)
+        - Less_than_comparison (expr * expr)
+        - Great_than_comparison (expr * expr)
+        - Less_Eq_than_comparison (expr * expr)
+        - Great_Eq_than_comparison (expr * expr)
+
+        // Arithemetic_expression
+        - Plus_Expr (term * expr)
+        - Minus_Expr (term * expr)
+        
+    term
+        - 
