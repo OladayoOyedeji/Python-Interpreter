@@ -6,11 +6,12 @@ let digit = ['0'-'9']
 let digits = digit+
 let integer = '0' | (('-'|'+')?['1'-'9'] ['0'-'9']*)
 let float = (integer ('e'|'E') integer) | (integer '.' digit*)
-let string = '\"'_*'\"'
+let string = ('\"'_*'\"')|('\''_*'\'')
 let plus = '+'
 let minus = '-'
 let mul = '*'
 let div = '/'
+let mod = '%'
 let exp = "**"
 let is_eq = "=="
 let is_neq = "!="
@@ -27,11 +28,23 @@ let lcomment = "(*"
 let rcomment = "*)"
 let alpha = ['a'-'z']
 let name = alpha+
+let indent = ['\n'] ([' ']*|['\t']*)
 let id_tok = ('_'+ alpha* digit*) | name (alpha* '_'* digit*)*
 let bool = ("True")|("False")
+let colon = ':'
 
 rule lexer = parse
-       lcomment
+       indent as s
+     {
+       let n  = count_indent s in
+       let scope = if n mod 4 = 0 then n / 4 else -1 in
+       (Indent_tok scope)::(lexer lexbuf)
+     }
+     | colon
+     {
+        (Colon_tok)::(lexer lexbuf)
+     }
+     | lcomment
      {
         comment 1 lexbuf
      }
@@ -44,19 +57,19 @@ rule lexer = parse
      }
      | is_less
      {
-        Is_Less_tok::(lexer lexbuf)
+        Comp_tok (Is_Less_tok)::(lexer lexbuf)
      }
      | is_less_eq
      {
-        Is_Less_Equ_tok::(lexer lexbuf)
+        Comp_tok (Is_Less_Equ_tok)::(lexer lexbuf)
      }
      | is_great
      {
-        Is_Great_tok::(lexer lexbuf)
+        Comp_tok (Is_Great_tok)::(lexer lexbuf)
      }
      | is_great_eq
      {
-        Is_Great_tok::(lexer lexbuf)
+        Comp_tok (Is_Great_tok)::(lexer lexbuf)
      }
      | lparen
      {
@@ -73,7 +86,7 @@ rule lexer = parse
      }
      | string as s
      {
-        (String_tok s)::(lexer lexbuf)
+        Literal_tok (String_tok s)::(lexer lexbuf)
      }
      | integer as s
      {
@@ -82,19 +95,23 @@ rule lexer = parse
      }
      | plus
      {
-        (Plus_tok)::(lexer lexbuf)
+        Basic_tok (Plus_tok)::(lexer lexbuf)
      }
      | minus
      {
-        (Minus_tok)::(lexer lexbuf)
+        Basic_tok (Minus_tok)::(lexer lexbuf)
      }
      | mul
      {
-        (Mul_tok)::(lexer lexbuf)
+        Inv_tok (Mul_tok)::(lexer lexbuf)
      }
      | div
      {
-        (Div_tok)::(lexer lexbuf)
+        Inv_tok (Div_tok)::(lexer lexbuf)
+     }
+     | mod
+     {
+        Inv_tok (Mod_tok)::(lexer lexbuf)
      }
      | exp
      {
@@ -110,11 +127,11 @@ rule lexer = parse
      }
      | is_eq
      {
-        (Is_Equ_tok)::(lexer lexbuf)
+        Comp_tok (Is_Equ_tok)::(lexer lexbuf)
      }
      | is_neq
      {
-        (Is_Neq_tok)::(lexer lexbuf)
+        Comp_tok (Is_Neq_tok)::(lexer lexbuf)
      }
      | eq
      {
