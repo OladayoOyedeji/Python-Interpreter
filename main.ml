@@ -10,11 +10,39 @@ let rec python_interpreter symmtable =
 
   let token_list = tokenize s in
   (* let _ = print_tokens token_list in *)
-  let e, xs = stmt token_list 0 in
+  try 
+  match token_list with
+      [] -> python_interpreter symmtable
+    | token_list ->
+      (* let _ = print_tokens token_list in *)
+      let e, xs = stmt token_list 0 in
 
-  let _ = run_tree e symmtable in
-
-  python_interpreter symmtable
+      let _ = run_tree e symmtable
+        
+      in
+      let _ = match xs with
+          Indent_tok n::xs ->
+          if n <> 0 then
+            raise (Failure "Invalid indent")
+          else
+            (match xs with
+               [] -> ()
+             | xs -> 
+               let e, xs = stmt xs 0 in
+               (match xs with
+                  [] -> let _ = run_tree e symmtable in
+                  ()
+                | _ -> raise (Failure "Invalid syntax")
+               )
+            )
+        | [] -> ()
+        | _ -> raise (Failure "Invalid syntax")
+      in
+      
+      python_interpreter symmtable
+with
+| Failure s -> let _ = print_string (s ^ "\n") in
+   python_interpreter symmtable
 ;;
 
 python_interpreter symmtable;;

@@ -9,8 +9,12 @@ type stmt = Cond_stmt of cond_branch
               
 and
   cond_branch = If_stmt of (bool_expr * stmt list)
+              | If_elif_stmt of (bool_expr * stmt list * cond_branch)
+              | If_else_stmt of (bool_expr * stmt list * stmt list)
+              | While_stmt of (bool_expr * stmt list)
 (* and *)
 (*   cond_loop = While_stmt of (expr * stmt) *)
+
 and
   bool_expr = Arth_Expr of arth_expr
        (* Bool_ Expression *)

@@ -55,6 +55,8 @@ type token = Literal_tok of literal
            | Colon_tok
            | If_tok
            | Else_tok
+           | Elif_tok
+           | While_tok 
            | Lcomment_tok
            | Rcomment_tok
            | Lparen_tok
@@ -308,6 +310,8 @@ let print_token t = match t with
   | Indent_tok scope -> Printf.printf "Indent tok scope: %d" scope
   | If_tok -> print_string "If_tok if"
   | Else_tok -> print_string "Else_tok else"
+  | Elif_tok -> print_string "Elif_tok elif"
+  | While_tok -> print_string "While_tok while"
   | Lcomment_tok -> print_string "comment (*"
   | Rcomment_tok -> print_string "comment *)"
   | Lparen_tok -> print_string "LParen_tok ("

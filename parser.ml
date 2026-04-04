@@ -19,15 +19,32 @@ let rec run_tree parse_tree symmtable =
       let _ = print_string "\n" in
       ()
   and
-    eval_cond cond = match cond with
+    eval_cond cond =
+    let rec eval_stmts s = match s with
+        [] -> ()
+      | s::xs -> let _ = eval_stmt s in
+        eval_stmts xs
+    in
+    match cond with
       If_stmt (b, s) -> let bool_expr = literal_bool (eval_bool_expr b) in
       if bool_expr then
-        let rec eval_stmts s = match s with
-            [] -> ()
-          | s::xs -> let _ = eval_stmt s in
-            eval_stmts xs
-        in
         eval_stmts s
+      else
+        ()
+    | If_elif_stmt (b, s, elif) -> let bool_expr = literal_bool (eval_bool_expr b) in
+      if bool_expr then
+        eval_stmts s
+      else
+        eval_cond elif
+    | If_else_stmt (b, sl, s) -> let bool_expr = literal_bool (eval_bool_expr b) in
+      if bool_expr then
+        eval_stmts sl
+      else
+        eval_stmts s
+    | While_stmt (b, s) -> let bool_expr = literal_bool (eval_bool_expr b) in
+      if bool_expr then
+        let _ = eval_stmts s in
+        eval_cond cond
       else
         ()
   and
@@ -46,7 +63,8 @@ let rec run_tree parse_tree symmtable =
   and
     eval_factor factor = match factor with
       Literal_Factor (l) -> l
-    | Variable_Factor (v) -> Hashtbl.find symmtable v
+    | Variable_Factor (v) -> if Hashtbl.mem symmtable v then Hashtbl.find symmtable v else
+        raise (Failure "Variable not found")
     | Paren_Expr_Factor (b) -> eval_bool_expr b
   in
   eval_stmt parse_tree
@@ -62,7 +80,7 @@ let rec process_scope scope =
     (* let _ = print_string "\n" in *)
     match tokens with
       Indent_tok n :: xs -> (match xs with
-          [] -> (rev acc, [])
+          [] -> (rev acc, tokens)
         | token_list ->
           (* let _ = Printf.printf "%d %d\n" n scope in *)
           if n == scope then
@@ -120,7 +138,7 @@ and
       let (e, toks3) = bool_expr toks2 scope in
       (Assgmt(name, e), toks3)
     )
-  | If_tok::_ -> let (cond, toks) = cond_branch toks scope in
+  | If_tok::_  | While_tok::_ -> let (cond, toks) = cond_branch toks scope in
     (
       (Cond_stmt cond, toks)
     )
@@ -135,17 +153,52 @@ and
         Colon_tok::xs ->
         (* let _ = print_string "branch\n" in *)
         let expr, t = process_scope (scope+1) in
-        (
-          match xs with
-            [] -> (If_stmt (b_expr, expr), t)
+
+        let expr = match xs with
+            [] -> expr
           | xs -> let b, x = stmt xs scope in
-            (
-              match x with
-                [] -> (If_stmt (b_expr, b::expr), t)
-              | _ -> raise (Failure "Invalid syntax")
-            )
+            (match x with
+               [] -> b::expr
+             | _ -> raise (Failure "Invalid syntax"))
+        in
+
+        (
+          (* let _ = print_tokens t in *)
+          match t with
+            Indent_tok n :: xs ->
+            if n = scope then
+              (
+                match xs with
+                  Elif_tok::toks -> let if_stmt, t = cond_branch (If_tok::toks) scope in
+                  (If_elif_stmt (b_expr, expr, if_stmt), t)
+                | Else_tok::toks -> let exp, t = process_scope (scope+1) in
+                  (If_else_stmt (b_expr, expr, exp), t)
+                | _ -> (If_stmt (b_expr, expr), t)
+              )
+            else
+              (If_stmt (b_expr, expr), t)
+          | _ -> raise (Failure "Invalid Syntax")
         )
+        
       | _ -> raise (Failure "Invalid syntax")
+    )
+  | While_tok::toks -> let (b_expr, toks) = bool_expr toks scope in
+    (
+      match toks with
+        Colon_tok::xs ->
+        (* let _ = print_string "branch\n" in *)
+        let expr, t = process_scope (scope+1) in
+
+        let expr = match xs with
+            [] -> expr
+          | xs -> let b, x = stmt xs scope in
+            (match x with
+               [] -> b::expr
+             | _ -> raise (Failure "Invalid syntax"))
+        in
+        (While_stmt (b_expr, expr), t)
+      | _ -> raise (Failure "Invalid syntax")
+
     )
   | _ -> raise (Failure "I dont even know!!")
 and

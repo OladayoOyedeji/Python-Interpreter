@@ -22,6 +22,8 @@ let is_great_eq = ">="
 let eq = "="
 let if = "if"
 let else = "else"
+let elif = "elif"
+let while = "while"
 let lparen = '('
 let rparen = ')'
 let lcomment = "(*"
@@ -124,6 +126,14 @@ rule lexer = parse
      | else
      {
         (Else_tok)::(lexer lexbuf)
+     }
+     | elif
+     {
+        (Elif_tok)::(lexer lexbuf)
+     }
+     | while
+     {
+        (While_tok)::(lexer lexbuf)
      }
      | is_eq
      {
