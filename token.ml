@@ -2,10 +2,29 @@
 
 exception Error;;
 
+let int_pow x n =
+  let rec f squares n p =
+    if n = 0 then p
+    else if n mod 2 = 1 then
+      f (squares * squares) (n/2) (p * squares)
+    else
+      f (squares * squares) (n/2) p
+  in
+  f x n 1
+;;
+
+let (%) x y = let r = x mod y in if r < 0 then r + y else r;;
+
 type literal = Int_tok of int
              | Float_tok of float
              | Bool_tok of int
              | String_tok of string
+;;
+
+let literal_bool lit = match lit with
+    Int_tok x | Bool_tok x -> (x <> 0)
+  | Float_tok x -> (x <> 0.0)
+  | String_tok s -> (s <> "")
 ;;
 
 type comparison_op = Is_Equ_tok
@@ -58,6 +77,191 @@ let count_indent s =
   f 0
 ;;
 
+(* let to_float lit = match lit with *)
+  
+
+let compare op a b =
+  match op with
+    Is_Equ_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i = i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) = f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f = f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f = (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s = s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Is_Neq_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i <> i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) <> f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f <> f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f <> (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s <> s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Is_Less_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i < i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) < f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f < f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f < (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s < s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Is_Less_Equ_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i <= i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) <= f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f <= f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f <= (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s <= s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Is_Great_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i > i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) > f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f > f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f > (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s > s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Is_Great_Equ_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        if i >= i1 then Bool_tok 1 else Bool_tok 0
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        if (float_of_int i) >= f then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), Float_tok (f1) ->
+        if f >= f1 then Bool_tok 1 else Bool_tok 0
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        if f >= (float_of_int i1) then Bool_tok 1 else Bool_tok 0
+      | String_tok (s), String_tok (s1) ->
+        if s >= s1 then Bool_tok 1 else Bool_tok 0
+      | _, _ -> raise (Failure "miss matching")
+    )
+;;
+
+let evaluate_basic op a b =
+  match op with
+    Plus_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        Int_tok (i + i1)
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        Float_tok ((float_of_int i) +. f)
+      | Float_tok (f), Float_tok (f1) ->
+        Float_tok (f +. f1)
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        Float_tok (f +. (float_of_int i1))
+      | String_tok (s), String_tok (s1) ->
+        String_tok (s ^ s1)
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Minus_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        Int_tok (i - i1)
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        Float_tok ((float_of_int i) -. f)
+      | Float_tok (f), Float_tok (f1) ->
+        Float_tok (f -. f1)
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        Float_tok (f -. (float_of_int i1))
+      | _, _ -> raise (Failure "miss matching")
+    )
+;;
+
+let evaluate_inv op a b =
+  match op with
+    Mul_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        Int_tok (i * i1)
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        Float_tok ((float_of_int i) *. f)
+      | Float_tok (f), Float_tok (f1) ->
+        Float_tok (f *. f1)
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        Float_tok (f *. (float_of_int i1))
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Div_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        Int_tok (i / i1)
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        Float_tok ((float_of_int i) /. f)
+      | Float_tok (f), Float_tok (f1) ->
+        Float_tok (f /. f1)
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        Float_tok (f /. (float_of_int i1))
+      | _, _ -> raise (Failure "miss matching")
+    )
+  | Mod_tok ->
+    (
+      match (a, b) with
+        (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+        Int_tok (i % i1)
+      | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+        Float_tok (mod_float (float_of_int i)  f)
+      | Float_tok (f), Float_tok (f1) ->
+        Float_tok (mod_float f f1)
+      | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+        Float_tok (mod_float f (float_of_int i1))
+      | _, _ -> raise (Failure "miss matching")
+    )
+;;
+
+let evaluate_exp a b = match (a, b) with
+    (Int_tok (i) | Bool_tok (i)), (Int_tok (i1) | Bool_tok (i1)) ->
+    Int_tok (int_pow i i1)
+  | (Int_tok (i) | Bool_tok (i)), Float_tok (f) ->
+    Float_tok ((float_of_int i) ** f)
+  | Float_tok (f), Float_tok (f1) ->
+    Float_tok (f ** f1)
+  | Float_tok (f), (Int_tok (i1) | Bool_tok (i1)) ->
+    Float_tok (f ** (float_of_int i1))
+  | _, _ -> raise (Failure "miss matching")
+;;
+
+
 exception IgnoreCase;;
 
 (* Write a print_token function. For instance print_token (Int_tok 5)
@@ -67,9 +271,9 @@ exception IgnoreCase;;
 *)
 
 let print_literal literal = match literal with
-        Int_tok (x) -> let _ = Printf.printf "Int_tok %d" x in
+        Int_tok (x) -> let _ = Printf.printf "%d" x in
         ()
-      | Float_tok (x) -> let _ = Printf.printf "Float_tok %f" x in
+      | Float_tok (x) -> let _ = Printf.printf "%f" x in
         ()
       | Bool_tok (x) -> if x == 1 then
           print_string "True"

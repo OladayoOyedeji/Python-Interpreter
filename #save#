@@ -1,0 +1,97 @@
+(* let run_tree parse_tree symmtable = *)
+(*   let rec eval_assign assign = match assign with *)
+(*       Not_Assign b -> let ret = eval_bool b in *)
+(*       let _ = print_literal ret in *)
+(*       print_string "\n" *)
+(*     | Assign (v, b) -> Hashtbl.add symmtable v (eval_bool b) *)
+(*   and *)
+(*     eval_bool bool = match bool with *)
+(*       Expr e -> eval_expr e *)
+(*     | Equ_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Equ_tok, (eval_bool b)) *)
+(*     | Nequ_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Neq_tok, (eval_bool b)) *)
+(*     | Less_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Less_tok, (eval_bool b)) *)
+(*     | Great_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Great_tok, (eval_bool b)) *)
+(*     | Less_Eq_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Less_Equ_tok, (eval_bool b)) *)
+(*     | Great_Eq_bool (e, b) -> evaluate_literal ((eval_expr e), Is_Great_Equ_tok, (eval_bool b)) *)
+(*   and eval_expr expr = match expr with *)
+(*       Plus_Expr (t, e) -> evaluate_literal ((eval_term t), Plus_tok, (eval_expr e)) *)
+(*     | Minus_Expr (t, e) -> evaluate_literal ((eval_term t), Minus_tok, (eval_expr e)) *)
+(*     | Term_Expr t -> eval_term t *)
+(*   and eval_term term = match term with *)
+(*       Mul_Term (f, t) -> evaluate_literal ((eval_factor f), Mul_tok, (eval_term t)) *)
+(*     | Div_Term (f, t) -> evaluate_literal ((eval_factor f), Mul_tok, (eval_term t)) *)
+(*     | Factor_Term f -> eval_factor f *)
+(*   and eval_factor factor = match factor with *)
+(*       Literal_Factor i -> i *)
+(*     | Variable_Factor name -> Hashtbl.find symmtable name *)
+(*     | Paren_Expr_Factor b -> eval_bool b *)
+(*   in *)
+(*   let _ = eval_assign parse_tree in *)
+(*   () *)
+(* ;; *)
+
+(* let exp, _ = e;; *)
+(* print_int (eval_expr exp);; *)
+(* print_string "\n";; *)
+
+(* let ans = infix_evaluate token_list;; *)
+(* print_token(ans);; *)
+(* print_string ("\n");; *)
+
+([Expr (Arth_Expr (Term_Expr (Factor_Term (Variable_Factor "r"))));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "r"),
+          Term_Expr (Factor_Term (Variable_Factor "r")))));
+    Cond_stmt
+     (If_stmt
+       (Arth_Expr (Term_Expr (Factor_Term (Literal_Factor (Bool_tok 1)))),
+        [Assgmt
+          ("x",
+           Arth_Expr (Term_Expr (Factor_Term (Literal_Factor (Int_tok 3)))));
+         Assgmt
+          ("y",
+           Arth_Expr (Term_Expr (Factor_Term (Literal_Factor (Int_tok 5)))))]));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "t"),
+          Term_Expr (Factor_Term (Variable_Factor "t")))));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "x"),
+          Term_Expr (Factor_Term (Variable_Factor "x")))));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Literal_Factor (Int_tok 5)),
+          Term_Expr (Factor_Term (Literal_Factor (Int_tok 5))))));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "t"),
+          Term_Expr (Factor_Term (Variable_Factor "t")))));
+    Cond_stmt
+     (If_stmt
+       (Comparison_bool
+         (Is_Equ_tok, Term_Expr (Factor_Term (Variable_Factor "x")),
+          Arth_Expr (Term_Expr (Factor_Term (Variable_Factor "d")))),
+        [Assgmt
+          ("x",
+           Arth_Expr (Term_Expr (Factor_Term (Literal_Factor (Int_tok 5)))));
+         Assgmt
+          ("y",
+           Arth_Expr (Term_Expr (Factor_Term (Literal_Factor (Int_tok 9)))))]));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "r"),
+          Term_Expr (Factor_Term (Variable_Factor "r")))));
+    Expr
+     (Arth_Expr
+       (Basic_Expr
+         (Plus_tok, Factor_Term (Variable_Factor "t"),
+          Term_Expr (Factor_Term (Variable_Factor "t")))))],
+   [])
