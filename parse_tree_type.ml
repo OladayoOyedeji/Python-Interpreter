@@ -43,6 +43,7 @@ and
   factor = Literal_Factor of literal
          | Variable_Factor of string
          | Paren_Expr_Factor of bool_expr
+         | List_Factor of bool_expr list
 ;;
     
 

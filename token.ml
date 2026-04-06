@@ -1,6 +1,19 @@
 (* File: token.ml *)
 
 exception Error;;
+let print_list print_elem lst =
+  print_string "[";
+  let rec aux = function
+    | [] -> ()
+    | [x] -> print_elem x
+    | x :: xs ->
+        print_elem x;
+        print_string ", ";
+        aux xs
+  in
+  aux lst;
+  print_string "]"
+;;
 
 let int_pow x n =
   let rec f squares n p =
@@ -19,12 +32,24 @@ type literal = Int_tok of int
              | Float_tok of float
              | Bool_tok of int
              | String_tok of string
+             | Iterables_tok of iterable
+             (* | None *)
+             (* | Lists of (literal array) *)
+             (* | Tuples of (literal array) *)
+and
+  iterable = List_tok of literal list
+  
 ;;
 
 let literal_bool lit = match lit with
     Int_tok x | Bool_tok x -> (x <> 0)
   | Float_tok x -> (x <> 0.0)
   | String_tok s -> (s <> "")
+  | Iterables_tok t -> (match t with
+    List_tok l -> (l = []))
+  (* | None -> false *)
+  (* | Lists (l) -> Array.length l == 0 *)
+  (* | Tuples (t) -> Array.length t == 0 *)
 ;;
 
 type comparison_op = Is_Equ_tok
@@ -33,6 +58,7 @@ type comparison_op = Is_Equ_tok
                    | Is_Less_Equ_tok
                    | Is_Great_tok
                    | Is_Great_Equ_tok
+                   | Membership_tok
 ;;
 
 type basic_op = Plus_tok
@@ -59,6 +85,9 @@ type token = Literal_tok of literal
            | While_tok 
            | Lcomment_tok
            | Rcomment_tok
+           | Comma_tok
+           | Lbracket_tok
+           | Rbracket_tok
            | Lparen_tok
            | Rparen_tok
 ;;
@@ -82,7 +111,7 @@ let count_indent s =
 (* let to_float lit = match lit with *)
   
 
-let compare op a b =
+let rec compare op a b =
   match op with
     Is_Equ_tok ->
     (
@@ -97,7 +126,19 @@ let compare op a b =
         if f = (float_of_int i1) then Bool_tok 1 else Bool_tok 0
       | String_tok (s), String_tok (s1) ->
         if s = s1 then Bool_tok 1 else Bool_tok 0
-      | _, _ -> raise (Failure "miss matching")
+      | Iterables_tok l0, Iterables_tok l1 ->
+        let rec eq l0 l1 = match (l0, l1) with
+          [], [] -> Bool_tok 1
+          | x::xs, y::ys -> if literal_bool (compare Is_Equ_tok x y) then
+              eq xs ys
+            else
+              Bool_tok 0
+          | _, _ -> Bool_tok 0
+        in
+        let List_tok l0 = l0 in
+        let List_tok l1 = l1 in
+        eq l0 l1
+      | _, _ -> Bool_tok 0
     )
   | Is_Neq_tok ->
     (
@@ -112,7 +153,11 @@ let compare op a b =
         if f <> (float_of_int i1) then Bool_tok 1 else Bool_tok 0
       | String_tok (s), String_tok (s1) ->
         if s <> s1 then Bool_tok 1 else Bool_tok 0
-      | _, _ -> raise (Failure "miss matching")
+      | Iterables_tok l0, Iterables_tok l1 ->
+        (match  compare Is_Equ_tok a b with
+          Bool_tok b -> Bool_tok ((b + 1) % 2)
+        | _ -> raise (Failure "What?"))
+      | _, _ -> Bool_tok 0
     )
   | Is_Less_tok ->
     (
@@ -173,6 +218,26 @@ let compare op a b =
       | String_tok (s), String_tok (s1) ->
         if s >= s1 then Bool_tok 1 else Bool_tok 0
       | _, _ -> raise (Failure "miss matching")
+    )
+  | Membership_tok ->
+    (
+      match b with
+        Iterables_tok (l) ->
+        (
+          (match l with
+            List_tok l ->
+            let rec elementof x list = match list with
+                [] -> false
+              | y::xs ->
+                if literal_bool (compare Is_Neq_tok x y) then
+                  elementof x xs
+                else
+                  true
+            in
+            if elementof a l then Bool_tok 1 else Bool_tok 0
+          )
+        )
+      | _ -> raise (Failure "Is not Iterable")
     )
 ;;
 
@@ -272,7 +337,7 @@ exception IgnoreCase;;
    in the console window.
 *)
 
-let print_literal literal = match literal with
+let rec print_literal literal = match literal with
         Int_tok (x) -> let _ = Printf.printf "%d" x in
         ()
       | Float_tok (x) -> let _ = Printf.printf "%f" x in
@@ -282,11 +347,13 @@ let print_literal literal = match literal with
         else
           print_string "False"
       | String_tok (x) -> print_string x
-        
+      | Iterables_tok t -> (match t with
+            List_tok l -> print_list print_literal l)
+                          
 ;;
 
 let print_token t = match t with
-  Literal_tok (l) -> print_literal l
+    Literal_tok (l) -> print_literal l
   | Id_tok x -> let _ = Printf.printf "Id tok %s" x in
     ()
   | Basic_tok (b) -> (match b with
@@ -302,9 +369,10 @@ let print_token t = match t with
         Is_Equ_tok -> print_string "Is_Equ_tok =="
       | Is_Neq_tok -> print_string "Is_Neq_tok !="
       | Is_Less_tok -> print_string "Is_Less_tok <"
-      | Is_Less_Equ_tok -> print_string "Is_Less_Equ_tok <="
+      | Is_Less_Equ_tok -> print_string "Is_Less_Equ_tok <=" 
       | Is_Great_tok -> print_string "Is_Great_tok >"
-      | Is_Great_Equ_tok -> print_string "Is_Great_Eq_tok >=")
+      | Is_Great_Equ_tok -> print_string "Is_Great_Eq_tok >="
+      | Membership_tok -> print_string "member in")
   | Colon_tok -> print_string "Colon_tok"
   | Equ_tok -> print_string "Eq_tok ="
   | Indent_tok scope -> Printf.printf "Indent tok scope: %d" scope
@@ -314,6 +382,9 @@ let print_token t = match t with
   | While_tok -> print_string "While_tok while"
   | Lcomment_tok -> print_string "comment (*"
   | Rcomment_tok -> print_string "comment *)"
+  | Comma_tok -> print_string "comma ,"
+  | Lbracket_tok -> print_string "lbracket ["
+  | Rbracket_tok -> print_string "rbracket ]"
   | Lparen_tok -> print_string "LParen_tok ("
   | Rparen_tok -> print_string "RParen_tok )"
 ;;

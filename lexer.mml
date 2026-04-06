@@ -7,6 +7,8 @@ let digits = digit+
 let integer = '0' | (('-'|'+')?['1'-'9'] ['0'-'9']*)
 let float = (integer ('e'|'E') integer) | (integer '.' digit*)
 let string = ('\"'_*'\"')|('\''_*'\'')
+let lbracket = '['
+let rbracket = ']'
 let plus = '+'
 let minus = '-'
 let mul = '*'
@@ -34,6 +36,8 @@ let indent = ['\n'] ([' ']*|['\t']*)
 let id_tok = ('_'+ alpha* digit*) | name (alpha* '_'* digit*)*
 let bool = ("True")|("False")
 let colon = ':'
+let comma = ','
+let memb = "in"
 
 rule lexer = parse
        indent as s
@@ -46,9 +50,25 @@ rule lexer = parse
      {
         (Colon_tok)::(lexer lexbuf)
      }
+     | comma
+     {
+        (Comma_tok)::(lexer lexbuf)
+     }
+     | memb
+     {
+        Comp_tok (Membership_tok)::(lexer lexbuf)
+     }
      | lcomment
      {
         comment 1 lexbuf
+     }
+     | lbracket
+     {
+         (Lbracket_tok)::(lexer lexbuf)
+     }
+     | rbracket
+     {
+        (Rbracket_tok)::(lexer lexbuf)
      }
      | bool as s
      {

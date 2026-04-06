@@ -66,6 +66,11 @@ let rec run_tree parse_tree symmtable =
     | Variable_Factor (v) -> if Hashtbl.mem symmtable v then Hashtbl.find symmtable v else
         raise (Failure "Variable not found")
     | Paren_Expr_Factor (b) -> eval_bool_expr b
+    | List_Factor (l) -> let rec eval_list l acc = (match l with
+          [] -> acc
+        | x::xs -> eval_list xs ((eval_bool_expr x)::acc))
+      in
+      Iterables_tok (List_tok (eval_list l []))
   in
   eval_stmt parse_tree
 ;;
@@ -89,7 +94,7 @@ let rec process_scope scope =
             (* let _ = print_tokens t in *)
             (
               match t with
-                [] -> let _ = print_string "..." in
+                [] -> let _ = print_string "\027[32m...\027[0m" in
                 let _ = print_string " " in
                 let s = read_line () in
                 let s = "\n" ^ s in
@@ -101,7 +106,7 @@ let rec process_scope scope =
                     Indent_tok n :: xs ->
                     if n = scope then
                       let ex, _ = stmt xs scope in
-                      let _ = print_string "..." in
+                      let _ = print_string "\027[32m...\027[0m" in
                       let _ = print_string " " in
                       let s = read_line () in
                       let s = "\n" ^ s in
@@ -124,7 +129,7 @@ let rec process_scope scope =
       )
     | _ -> raise (Failure "Invalid statement")
   in
-  let _ = print_string "..." in
+  let _ = print_string "\027[32m...\027[0m" in
   let _ = print_string " " in
   let s = read_line () in
   let s = "\n" ^ s in
@@ -248,6 +253,25 @@ and
       match toks2 with
         Rparen_tok::toks3 -> (Paren_Expr_Factor(e), toks3)
       | _ -> raise (Failure "Missing Rparen")
+    )
+  | Lbracket_tok::toks1 ->
+    (
+      let rec process_list tok acc = let e, tok = bool_expr tok scope in
+        let acc = e::acc in
+        (match tok with
+           Comma_tok::tok -> process_list tok acc
+         | Rbracket_tok::tok -> (acc, tok)
+         | _ -> raise (Failure "Invalid Syntax"))
+      in
+
+      let e, t = process_list toks1 [] in
+      (List_Factor(e), t)
+      
+      (* match tok with *)
+      (* Literal_tok l :: tok -> *)
+      (* match tok with *)
+      (*   Comma_tok::xs -> process_list tok (l::acc) *)
+      (* | R *)
     )
   | _ -> raise (Failure "Missing Id_tok or Lparen")
 ;;
