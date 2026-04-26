@@ -9,7 +9,7 @@ let rec python_interpreter symmtable =
   (* let s = "\n" ^ s in *)
 
   let token_list = tokenize s in
-  let _ = print_tokens token_list in
+  (* let _ = print_tokens token_list in *)
   match token_list with
     Indent_tok n :: token_list ->
     if n <> 0 then

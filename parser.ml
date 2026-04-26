@@ -176,8 +176,10 @@ and
                 match xs with
                   Elif_tok::toks -> let if_stmt, t = cond_branch (If_tok::toks) scope in
                   (If_elif_stmt (b_expr, expr, if_stmt), t)
-                | Else_tok::toks -> let exp, t = process_scope (scope+1) in
-                  (If_else_stmt (b_expr, expr, exp), t)
+                | Else_tok::toks -> (match toks with
+                      Colon_tok::toks -> let exp, t = process_scope (scope+1) in
+                      (If_else_stmt (b_expr, expr, exp), t)
+                    | _ -> raise (Failure "Missing colon"))
                 | _ -> (If_stmt (b_expr, expr), t)
               )
             else
@@ -264,7 +266,10 @@ and
          | _ -> raise (Failure "Invalid Syntax"))
       in
 
-      let e, t = process_list toks1 [] in
+      let e, t = match toks1 with
+          Rbracket_tok::tok -> [], tok
+        | toks1 -> process_list toks1 []
+      in
       (List_Factor(e), t)
       
       (* match tok with *)
